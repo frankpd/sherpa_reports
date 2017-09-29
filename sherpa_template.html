@@ -1,0 +1,184 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html"/>
+<meta name="description" content="Jinja2 Template for SHERPA reports, last modified Sept 28, 2017"/>
+<meta name="author" content="fdonnelly" />
+
+<style type="text/css">
+table {
+    border: 1px solid black;
+     border-spacing: 5px;}
+th {
+    text-align: left;
+    padding: 5px;
+}
+ td{text-align: center;
+    padding: 5px;
+ }
+ 
+ #red{color: red;
+ }
+ 
+ #bred{color: red;
+ 		font-weight: bold;
+ } 
+ 
+</style>    
+
+<title>Report for {{infile}} on {{today}}</title>
+
+</head>
+<body>
+
+{% if rpt_title is none %}
+	<h1 id="top">Results for {{infile}} processed on {{today}}</h1>
+{% else %}
+	<h1 id="top">{{rpt_title}}</h1>
+	<h2>Results for {{infile}} processed on {{today}}</h2>
+{% endif %}
+
+<p><a href="#matches">Matched Records</a> | <a href="#multiple">Multiple Matches</a> | 
+<a href="#nomatch">Unmatched Records</a> | <a href="#fail">Failed Matches</a></p>
+
+<h2>File summary:</h2>
+
+<table>
+
+	<tr><th>Total records processed:</th> <td>{{counter}}</td></td><td></tr>
+	<tr><th>Matched to one journal:</th> <td>{{counts['matcount']}}</td> <td>{{counts['pct_matches']}}</td></tr>
+	<tr><th>Multiple matches:</th> <td>{{counts['multcount']}}</td> <td>{{counts['pct_multiple']}}</td></tr>
+	<tr><th>No matches:</th> <td>{{counts['nocount']}}</td> <td>{{counts['pct_nomatch']}}</td></tr>
+	<tr><th>Failed - could not resolve:</th> <td>{{counts['failcount']}}</td> <td>{{counts['pct_failed']}}</td></tr>
+
+</table>
+
+<div>
+<h2>For records with one match:</h2>
+<p>Visit Sherpa's <a href="http://www.sherpa.ac.uk/romeoinfo.html" target="_blank">definitions and terms</a></p>
+<div style="float: left; width: 250px;">
+
+<h3>Romeo Colors</h3>
+<table>
+{% for key, value in color.items() %}
+<tr><th>{{key}}</th> <td>{{value}}</td> <td>{{color_pct[key]}}</td></tr>
+{% endfor %}
+</table>
+</div>
+<div>
+<h3>Versioning</h3>
+<table>
+	<tr><th>Pre-print archiving allowed:</th><td>{{counts['pre']}}</td> <td>{{counts['pct_pre']}}</td></tr>
+	<tr><th>Post-print archiving allowed:</th><td>{{counts['post']}}</td> <td>{{counts['pct_post']}}</td></tr>
+	<tr><th>Final PDF archiving allowed:</th><td>{{counts['pdf']}}</td><td>{{counts['pct_pdf']}}</td></tr>
+</table>
+</div>
+<div style="clear:both;">
+</div>
+
+<h3>Single-match journals that allow final PDF archiving</h3>
+<ul>
+{% for record in matches %}
+	{% if record[6]=='can' %}
+		<li>{{record[1]}}</li>
+	{% endif %}
+{% endfor %}
+</ul>
+
+<h3>Single-match journals that allow post-print archiving</h3>
+<ul>
+{% for record in matches %}
+	{% if record[5]=='can' %}
+		<li>{{record[1]}}</li>
+	{% endif %}
+{% endfor %}
+</ul>
+
+<hr/>
+
+<h2 id="matches">Titles successfully matched</h2>
+<p>These records were successfully identified in Sherpa-ROMEO</p>
+{% for record in matches %}
+<strong><em>{{record[1]}}</em></strong> appears {{checkcount[record[1]][1]}} times in this file
+<ul>
+	{% for entry in zip(names, record[0:9]) %}
+		{% if entry[0] in ['prearchiving','postarchiving','pdfarchiving'] %}
+			{% if entry[1] =='can' %}
+				<li id='bred'>{{entry[0]}} : {{entry[1]}}</li>
+			{% else %}
+				<li id='red'>{{entry[0]}} : {{entry[1]}}</li>
+			{% endif %}
+		{% else %}		
+			<li>{{entry[0]}} : {{entry[1]}}</li>
+		{% endif %}
+	{% endfor %}
+		<li>conditions:</li>
+	<ul>
+		{% for item in record[9:-1] %}
+	<li>{{item}}</li>
+	{% endfor %}
+	</ul>
+	{% for key, value in record[-1].items() %}
+		<li>{{key}} : <a href="{{value}}" target="_blank">{{value}}</a></li>
+	{% endfor %}
+</ul>
+<hr/>
+{% endfor %}
+
+<a href="#top">Return to the top of the report</a>
+
+<h2 id="multiple">Titles with multiple matches</h2>
+<h3>There was more than one possible match for these records</h3>
+<ul>
+{% for record in multiple %}
+		<li>{{record}} appears {{checkcount[record[0]][1]}} times in this file</li>
+{% endfor %}
+</ul>
+
+<h3>These titles were found in the database</h3>
+{% for record in mult_detail %}
+<strong><em>{{record[1]}}</em></strong>
+<ul>
+	{% for entry in zip(names, record[0:9]) %}
+		{% if entry[0] in ['prearchiving','postarchiving','pdfarchiving'] %}
+			{% if entry[1] =='can' %}
+				<li id='bred'>{{entry[0]}} : {{entry[1]}}</li>
+			{% else %}
+				<li id='red'>{{entry[0]}} : {{entry[1]}}</li>
+			{% endif %}
+		{% else %}		
+			<li>{{entry[0]}} : {{entry[1]}}</li>
+		{% endif %}
+	{% endfor %}
+	<li>conditions:</li>
+	<ul>
+		{% for item in record[9:-1] %}
+			<li>{{item}}</li>
+		{% endfor %}
+	</ul>
+	{% for key, value in record[-1].items() %}
+		<li>{{key}} : <a href="{{value}}" target="_blank">{{value}}</a></li>
+	{% endfor %}
+</ul>
+<hr/>
+{% endfor %}
+
+<h2 id="nomatch">Titles not matched</h2>
+<p>These records were not found in the Sherpa-ROMEO database</p>
+<ul>
+{% for record in nomatch %}
+	<li><em>{{record[1]}}</em> appears {{checkcount[record[1]][1]}} times</li>
+{% endfor %}
+</ul>
+
+<h2 id="fail">Failed records</h2>
+<p>These records could not be passed to Sherpa-ROMEO for matching</p>
+<ul>
+{% for record in failed %}
+	<li><em>{{record[1]}}</em> appears {{checkcount[record[1]][1]}} times</li>
+{% endfor %}
+</ul>
+
+<a href="#top">Return to the top of the report</a>
+
+</body>
+</html>
