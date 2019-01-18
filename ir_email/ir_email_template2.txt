@@ -1,0 +1,15 @@
+{{firstname}} {{lastname}}
+{{email}}
+
+Dear Professor {{lastname}},
+
+Postprints of some of your recently published journal articles are eligible for inclusion in CUNY Academic works:
+
+{% for work in publications %}
+- "{{work[0]}}" in {{work[1]}}
+{% endfor %}
+
+Regards,
+
+-----------------------------------------------------
+
